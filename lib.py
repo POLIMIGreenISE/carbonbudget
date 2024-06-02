@@ -57,7 +57,7 @@ def optimizationHourly(energyBudget, user_demand, indices, userMax, energyDemand
     # nell'objective function. Rappresenta la QoE complessiva, in percentuale, per la configurazione scelta
     qoe_final = m.addVar(lb=0, ub=1, vtype=GRB.CONTINUOUS, name="qoe_final")
 
-    # CHECK: Definisco la variabile total_rev, che rappresenterà TODO commenta
+    # CHECK: Definisco la variabile total_rev, che rappresenterà la revenue complessiva per l'ora in esame
     total_rev = m.addVar(lb=0, vtype=GRB.CONTINUOUS, name="total_rev")
 
     # CHECK: Definisco la variabile rev_final (valore compreso tra 0 e 1), che vogliamo massimizzare insieme a qoe_final 
