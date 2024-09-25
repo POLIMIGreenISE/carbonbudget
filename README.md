@@ -15,6 +15,7 @@ The results of the experiments can be found in the form of CSV files in the "res
 2. HL
 3. LH
 4. LL
+   
 These folders contain the results of the experiments that take as input the JSON files flightBooking_HH.json, flightBooking_HL.json, flightBooking_LH.json and flightBooking_LL.json, respectively, that correspond to four different configurations for the application. These results are contained into furhter sub-fodlers, which divide them by algorithm, and consist of 8 files (one for each carbon budget), except for the high-performance baseline, which is a single CSV file (given that its results are independent from the budget used).
 
 # Visualization
