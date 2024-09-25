@@ -57,7 +57,7 @@ def optimizationHourly(energyBudget, user_demand, indices, userMax, energyDemand
     # nell'objective function. Rappresenta la QoE complessiva, in percentuale, per la configurazione scelta
     qoe_final = m.addVar(lb=0, ub=1, vtype=GRB.CONTINUOUS, name="qoe_final")
 
-    # CHECK: Definisco la variabile total_rev, che rappresenterà la revenue complessiva per l'ora in esame
+    # CHECK: Definisco la variabile total_rev, che rappresenterà TODO commenta
     total_rev = m.addVar(lb=0, vtype=GRB.CONTINUOUS, name="total_rev")
 
     # CHECK: Definisco la variabile rev_final (valore compreso tra 0 e 1), che vogliamo massimizzare insieme a qoe_final 
@@ -81,7 +81,7 @@ def optimizationHourly(energyBudget, user_demand, indices, userMax, energyDemand
                 m.addConstr(sf[ms,x] == 0, name="c-sf"+str(ms)+str(x))
             else:
                 # Ensure user demand is met by the chosen configuration option considering the scaling factor
-                m.addConstr(userMax[ms][x]*sf[ms,x] >= u[ms]*user_demand, name="c-sf"+str(ms)+str(x))
+                m.addConstr(userMax[ms][x]*sf[ms,x]*b[ms,x] >= u[ms]*user_demand*b[ms,x], name="c-sf"+str(ms)+str(x))
 
 
     # Constraint for the energy budget: total energy consumption must be less than or equal to the budget
@@ -260,7 +260,7 @@ def calcEnergyDemandMax(maxClickData_hourly):
     :param p1: user request Data
     return: Energy Demand per Hour
     """
-    data, vars_ms, userMax, energyDemand, q, QoE, rev = getConstantsFromBPMN('flightBooking.json')
+    data, vars_ms, userMax, energyDemand, q, QoE, rev = getConstantsFromBPMN('flightBooking_HH.json')
 
     ## Max q per ms in Architecture (quindi q massimo per le varie versioni del ms)
     maxQ = [max(q[i]) for i in range(len(q))]
@@ -278,14 +278,14 @@ def calcEnergyDemandMax(maxClickData_hourly):
 
     max_numInstances = []
 
-    for i in range(len(userMax)):  # Gestisco il caso di userMax = 0
+    for i in range(len(userMax)): # Itero per ogni ms
         temp = click_max[i] / userMax[i][-1] # temp sarà uguale al numero massimo previsto di utenti eseguendo una versione HP 
                                              # dell'app diviso il numero massimo di utenti gestibile dal ms
-        if math.isnan(temp): 
+        if math.isnan(temp): # Gestisco il caso di userMax = 0
             max_numInstances.append(0) 
             print(temp,i)
         else:
-            max_numInstances.append(math.ceil(click_max[i] / userMax[i][-1]))
+            max_numInstances.append(math.ceil(temp))
 
     ## Max ED per ms in Architecture (domanda energetica massima, tra le varie versioni, per ms)
     maxEnergyDemand = [max(energyDemand[i]) for i in range(len(energyDemand))]
@@ -307,7 +307,7 @@ def calcEnergyDemandMin(maxClickData_hourly):
     :param p1: user request Data
     return: Energy Demand per Hour
     """
-    data, vars_ms, userMax, energyDemand, q, QoE, rev = getConstantsFromBPMN('flightBooking.json')
+    data, vars_ms, userMax, energyDemand, q, QoE, rev = getConstantsFromBPMN('flightBooking_HH.json')
 
     ## Min q per ms in Architecture (quindi q massimo per le varie versioni del ms)
     minQ = [min(q[i]) for i in range(len(q))]
@@ -325,14 +325,14 @@ def calcEnergyDemandMin(maxClickData_hourly):
 
     min_numInstances = []
 
-    for i in range(len(userMax)):  # Gestisco il caso di userMax = 0
+    for i in range(len(userMax)):  
         temp = click_min[i] / userMax[i][0] # temp sarà uguale al numero massimo previsto di utenti eseguendo una versione HP 
                                              # dell'app diviso il numero massimo di utenti gestibile dal ms
-        if math.isnan(temp): 
+        if math.isnan(temp): # Gestisco il caso di userMax = 0
             min_numInstances.append(0) 
             print(temp,i)
         else:
-            min_numInstances.append(math.ceil(click_min[i] / userMax[i][0]))
+            min_numInstances.append(math.ceil(temp))
 
     ## Min ED per ms in Architecture (domanda energetica minima, tra le varie versioni, per ms)
     minEnergyDemand = [min(energyDemand[i]) for i in range(len(energyDemand))]
@@ -347,33 +347,37 @@ def calcEnergyDemandMin(maxClickData_hourly):
     return(ed) 
 
 
-def calcCarbonEmissionFromEnergyDemand(ed, ci_data):
+def calcCarbonEmissionFromEnergyDemand(ed, ci_data, index):
     """
     Calculates the carbon emissions for a given energy demand and carbon intensity data
 
     :param p1: energy demand per hour per ms [kWh]
     :param p2: carbon intensity data per hour [gCO2eq per kWh]
+    :param p3: - 1 if I'm generating a constant CB, index of the hour of the year I'm observing, if it's the adaptive one
 
     return: carbon emissions per hour
     """
-    data, vars_ms, userMax, energyDemand, q, QoE, rev = getConstantsFromBPMN('flightBooking.json')
+    data, vars_ms, userMax, energyDemand, q, QoE, rev = getConstantsFromBPMN('flightBooking_HH.json')
 
     if len(ci_data) > 8760:
         ci_list = ci_data.tolist()
         ci_data = ci_list[0:1416] + ci_list[1416+24:8784] # Se l'anno è bisestile, salto il 29 febbraio
 
-    avgCI = mean(ci_data)
+    if index == -1: # Se sto creando un CB costante
+        avgCI = mean(ci_data)
 
-    emissionsPerHour = sum(ed[i] * avgCI for i in range(len(energyDemand))) # Itero per tutti i ms e calcolo le emissioni
-                    # orarie associate come la somma di ciascuna domanda energetica dei ms moltiplicata per la carbon intensity 
-                    # media per l'anno
-    
+        emissionsPerHour = sum(ed[i] * avgCI for i in range(len(energyDemand))) # Itero per tutti i ms e calcolo le emissioni
+                        # orarie associate come la somma di ciascuna domanda energetica dei ms moltiplicata per la carbon intensity 
+                        # media per l'anno
+    else: # Se sto creando un CB adattivo
+        emissionsPerHour = (sum(ed[i] * ci_data[index] for i in range(len(energyDemand))))
+
     return(emissionsPerHour)
 
 
-def generateConstantCarbonBudgets(year, clickData_hourly, ci_data):
+def generateConstantCarbonBudgets(clickData_hourly, ci_data):
     '''
-    Generate a csv file containing 5 constant carbon budgets, that will be taken as input fir the experiments.
+    Generate a csv file containing 5 constant carbon budgets, that will be taken as input for the experiments.
     These CB are calculated as follows:
     - for the energy demand of the application in high performance mode, considering the maximum number of hourly clicks
       in the year we're taking into account
@@ -390,11 +394,11 @@ def generateConstantCarbonBudgets(year, clickData_hourly, ci_data):
 
     # Calcolo Carbon Emission per una versione HP dell'applicazione con un numero massimo di utenti e lo userò come uno dei CB
     # costanti in input per gli esperimenti
-    maxCB = calcCarbonEmissionFromEnergyDemand(calcEnergyDemandMax(maxClickData_hourly), ci_data) 
+    maxCB = calcCarbonEmissionFromEnergyDemand(calcEnergyDemandMax(maxClickData_hourly), ci_data, -1) 
    
     # Calcolo Carbon Emission per una versione LP dell'applicazione con un numero massimo di utenti e lo userò come uno dei CB
     # costanti in input per gli esperimenti
-    minCB = calcCarbonEmissionFromEnergyDemand(calcEnergyDemandMin(maxClickData_hourly), ci_data)
+    minCB = calcCarbonEmissionFromEnergyDemand(calcEnergyDemandMin(maxClickData_hourly), ci_data, -1)
 
     # Calcolo tre valori, che utilizzerò come CB in input degli esperimenti, compresi tra maxCB e minCB
     avgCB = (maxCB + minCB) / 2 # CB medio
@@ -414,6 +418,41 @@ def generateConstantCarbonBudgets(year, clickData_hourly, ci_data):
 
     return
 
+def generateAdaptiveCarbonBudgets(clickData_hourly, ci_data):
+    '''
+    Generate a csv file containing 3 adaptive carbon budgets, that will be taken as input for the experiments.
+    These CB are calculated as follows:
+    - for the energy demand of the application in high performance mode
+    - for the energy demand of the application in low performance mode
+    - the average between the first two CB (the one for ed in HP and the one for ed in LP)
+
+    '''
+    # Scrivo su un file csv i CB che utilizzerò come input
+    row = ["MaxCarbonBudget", "MinCarbonBudget", "AVGCarbonBudget"] # Preparo il file csv
+    f = open('data/CB_adaptive.csv', 'w')
+    writer = csv.writer(f)
+    writer.writerow(row)
+
+    for i in range(len(clickData_hourly)): # Per ogni ora dell'anno
+        if clickData_hourly[i] == 0: # Se non ho click registrati per l'ora in esame, sostituisco a 0 il valore medio
+            clickData_hourly[i] = mean(clickData_hourly)
+
+        # Calcolo Carbon Emission per una versione HP dell'applicazione
+        maxCB = calcCarbonEmissionFromEnergyDemand(calcEnergyDemandMax(clickData_hourly[i]), ci_data, i) 
+    
+        # Calcolo Carbon Emission per una versione LP dell'applicazione 
+        minCB = calcCarbonEmissionFromEnergyDemand(calcEnergyDemandMin(clickData_hourly[i]), ci_data, i)
+
+        # Calcolo il CB medio per l'ora corrente
+        avgCB = (maxCB + minCB) / 2
+
+        row=[maxCB, minCB, avgCB]
+        writer.writerow(row)
+
+    f.close()
+
+    return
+
 
 # 3. Function to retrieve carbon busget from the csv file in input for the experiments
 def retrieveCarbonBudget(select):
@@ -426,6 +465,7 @@ def retrieveCarbonBudget(select):
     return: carbonBudget
     '''
     df = pd.read_csv(r'data/CB_constant.csv')
+    adaptiveCB = pd.read_csv(r'data/CB_adaptive.csv')
 
     if (select == 0):
         carbonBudget = df["MaxCarbonBudget"].values[0] # Leggo dati carbon budget più elevato
@@ -437,8 +477,35 @@ def retrieveCarbonBudget(select):
         carbonBudget = df["LowCarbonBudget"].values[0] # Leggo dati del secondo carbon budget meno elevato
     elif (select == 4):
         carbonBudget = df["MinCarbonBudget"].values[0] # Leggo dati del secondo carbon budget meno elevato
+    elif (select == 5):
+        carbonBudget = adaptiveCB["MaxCarbonBudget"]
+    elif (select == 6):
+        carbonBudget = adaptiveCB["AVGCarbonBudget"]
+    elif (select == 7):
+        carbonBudget = adaptiveCB["MinCarbonBudget"]
     else:
         print("invalid parameter for function retrieveCarbonBudget(select)")
         return
 
     return carbonBudget
+
+
+def calculateEnergyDemand(configuration, user_demand):
+    '''
+    Calcola la domanda energetica oraria, data una configurazione e il numero di click per quell'ora in input
+    '''
+    ed = math.ceil(user_demand / configuration[0][2]) * configuration[0][1] # Domanda energetica definita come il numero di
+                # click per quell'ora, diviso il numero massimo di utenti del primo ms (quindi il num. di istanze del primo ms)
+                # il tutto moltiplicato per la richiesta energetica di una singola istanza del ms
+    user_temp = user_demand * configuration[0][0] # Il numero di utenti in uscita è dato da il num di click orari per q del primo ms
+   
+    for i in range(1,len(configuration)): # Itero tra i vari ms
+        if (configuration[i][2] == 10000000000): # se vedo che la versione del ms è "off")
+            ed += 0 # La domanda energetica sarà 0
+        else:
+            ed += math.ceil(user_temp / configuration[i][2]) * configuration[i][1] # Altrimenti la domanda energetica è data
+                # da il numero di utenti in entrata al ms diviso il numero massimo del ms (quindi il num. di istanze del ms)
+                # il tutto moltiplicato per la richiesta energetica di una singola istanza del ms
+        user_temp *= configuration[i][0] # Il numero di utenti in uscita è dato dal num di utenti in entrata al ms per q del ms
+   
+    return(ed) # Ritorno la domanda energetica oraria

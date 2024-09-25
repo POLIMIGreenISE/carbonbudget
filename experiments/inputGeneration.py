@@ -12,17 +12,18 @@ from lib import *
 
 path = os.path.dirname(os.getcwd())
 
-
-
-data, vars_ms, userMax, energyDemand, q, QoE, rev = getConstantsFromBPMN('flightBooking.json')
-
-
 df = pd.read_csv(r'data/DE_2021.csv')
 ci_data_2021 = df['carbon_intensity_avg']
 
 df = pd.read_csv(r'data/projectcount_wikiDE_2015.csv') # Leggo click orari anno 2015
 clickData_hourly = df["De"]
 
-generateConstantCarbonBudgets(2021, clickData_hourly, ci_data_2021)
+generateConstantCarbonBudgets(clickData_hourly, ci_data_2021)
 
-#calcCarbonBudgetHourInWeekAVG(2021, clickData_hourly, ci_data_2021) # Generate 5 csv files for CB in input
+df = pd.read_csv(r'data/DE_2020.csv')
+ci_data_2020 = df['carbon_intensity_avg']
+
+df = pd.read_csv(r'data/projectcount_wikiDE_2014.csv') # Leggo click orari anno 2014
+clickData_hourly_2014 = df["de"]
+
+generateAdaptiveCarbonBudgets(clickData_hourly_2014, ci_data_2020) # Generate 3 csv files for CB in input

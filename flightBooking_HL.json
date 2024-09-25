@@ -1,0 +1,103 @@
+{
+    "name": "Flight Booking Use Case",
+    "components": {
+        "Flight Search": {
+            "Low Power":{
+                "aws-ec2-type": "t3.micro",
+                "energy-demand": 13.0,
+                "user-scaling": 20000,
+                "q": 0.5,
+                "QoE": 0.1,
+                "rev": 0
+            },
+            "Normal":{
+                "aws-ec2-type": "t3.xlarge",
+                "energy-demand": 39.9,
+                "user-scaling": 20000,
+                "q": 0.7,
+                "QoE": 0.3,
+                "rev": 0
+            },
+            "High Perfomance":{
+                "aws-ec2-type": "g2.2xlarge",
+                "energy-demand": 305.4,
+                "user-scaling": 20000,
+                "q": 0.9,
+                "QoE": 1,
+                "rev": 0
+            }
+        },
+        "Weather Information":{
+            "Off":{
+                "aws-ec2-type": null,
+                "energy-demand": 0,
+                "user-scaling": null,
+                "q": 0.9,
+                "QoE": 0,
+                "rev": 0
+            },
+            "Normal":{
+                "aws-ec2-type": "t3.micro",
+                "energy-demand": 13.0,
+                "user-scaling": 20000,
+                "q": 1,
+                "QoE": 1,
+                "rev": 0.2
+            }
+        },
+        "Flight Booking": {
+            "Low Power":{
+                "aws-ec2-type": "t3.micro",
+                "energy-demand": 13.0,
+                "user-scaling": 20000,
+                "q": 0.5,
+                "QoE": 0.1,
+                "rev": 0
+            },
+            "Normal":{
+                "aws-ec2-type": "t3.xlarge",
+                "energy-demand": 39.9,
+                "user-scaling": 20000,
+                "q": 0.95,
+                "QoE": 1,
+                "rev": 0
+            }
+        },
+        "Payment":{
+            "Normal":{
+                "aws-ec2-type": "t3.xlarge",
+                "energy-demand": 39.9,
+                "user-scaling": 20000,
+                "q": 0.99,
+                "QoE": 1,
+                "rev": 0
+            }
+        },
+        "Car Rental":{
+            "Off":{
+                "aws-ec2-type": null,
+                "energy-demand": 0,
+                "user-scaling": null,
+                "q": 0.75,
+                "QoE": 0,
+                "rev": 0
+            },
+            "Normal":{
+                "aws-ec2-type": "t3.xlarge",
+                "energy-demand": 39.9,
+                "user-scaling": 20000,
+                "q": 0.9,
+                "QoE": 0.3,
+                "rev": 0
+            },
+            "High Perfomance":{
+                "aws-ec2-type": "g2.2xlarge",
+                "energy-demand": 305.4,
+                "user-scaling": 20000,
+                "q": 1,
+                "QoE": 1,
+                "rev": 2
+            }
+        }
+    }
+}
