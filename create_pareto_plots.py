@@ -110,7 +110,8 @@ def plot_qoe_vs_budget(summary_df, config='LL', save_path=None):
     ax.set_ylabel('Quality of Experience (QoE)')
     ax.set_xlim(0, 1.1)
     ax.set_ylim(0, 1.1)
-    ax.legend(["OSCA", "SCA", "SeqCA", "HPE (not showing because utilization >>1)"],
+    handles, _ = ax.get_legend_handles_labels()
+    ax.legend(handles=handles, labels=["OSCA", "SCA", "SeqCA", "HPE (not showing because utilization >>1)"],
               loc='lower left', frameon=False, handletextpad=0.1)
     ax.grid(True, alpha=0.5)
     sns.despine(fig)
@@ -121,7 +122,6 @@ def plot_qoe_vs_budget(summary_df, config='LL', save_path=None):
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Saved: {save_path}")
 
-    plt.show()
     return fig
 
 
@@ -165,7 +165,6 @@ def plot_qoe_vs_revenue(summary_df, config='LL', save_path=None):
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Saved: {save_path}")
 
-    plt.show()
     return fig
 
 
@@ -184,11 +183,11 @@ def main():
     print("Calculating summary statistics...")
     summary = calculate_summary_statistics(pareto_data)
 
-    # Generate plots for each configuration
-    for config in APP_CONFIGS:
-        print(f"\nGenerating plots for {config}...")
-        plot_qoe_vs_budget(summary, config=config, save_path=f'plots/pareto_qoe_vs_budget_{config}.pdf')
-        plot_qoe_vs_revenue(summary, config=config, save_path=f'plots/pareto_qoe_vs_revenue_{config}.pdf')
+    # Generate plots for LL configuration only
+    config = 'LL'
+    print(f"\nGenerating plots for {config}...")
+    plot_qoe_vs_budget(summary, config=config, save_path=f'plots/pareto_qoe_vs_budget_{config}.pdf')
+    plot_qoe_vs_revenue(summary, config=config, save_path=f'plots/pareto_qoe_vs_revenue_{config}.pdf')
 
     print("\n✅ All plots generated in plots/ directory!")
 

@@ -31,7 +31,7 @@ ALGORITHMS = list(LABELS.keys())
 
 def load_experiment_data(region='DE', workload='wiki_en', year=2023):
     """Load carbon intensity and workload data."""
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    project_root = os.path.dirname(os.path.abspath(__file__))
 
     # Load carbon intensity data
     ci_file = os.path.join(project_root, "data", f"{region}_{year}_hourly.csv")
@@ -55,7 +55,7 @@ def load_experiment_data(region='DE', workload='wiki_en', year=2023):
 def load_experiment_results(region='DE', workload='wiki_en', results_dir=None):
     """Load experiment results for all algorithms and configurations."""
     if results_dir is None:
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        project_root = os.path.dirname(os.path.abspath(__file__))
         results_dir = os.path.join(project_root, 'results')
 
     results = {}
@@ -193,15 +193,19 @@ def create_boxplot(utilization_data, budget_names=None, title_suffix="", save_pa
                 box_labels.append(LABELS[algo])
                 box_colors.append(COLORS[algo])
 
-        # Create boxplot
-        box_plot = ax.boxplot(box_data, labels=box_labels, patch_artist=True,
-                             flierprops=dict(marker='o', markerfacecolor='black',
-                                           markersize=1, markeredgecolor='none'))
+        # Create boxplot only if we have data
+        if box_data:
+            box_plot = ax.boxplot(box_data, labels=box_labels, patch_artist=True,
+                                 flierprops=dict(marker='o', markerfacecolor='black',
+                                               markersize=1, markeredgecolor='none'))
 
-        # Style boxes
-        for patch, color in zip(box_plot['boxes'], box_colors):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.7)
+            # Style boxes
+            for patch, color in zip(box_plot['boxes'], box_colors):
+                patch.set_facecolor(color)
+                patch.set_alpha(0.7)
+        else:
+            ax.text(0.5, 0.5, 'No data available', ha='center', va='center',
+                   transform=ax.transAxes, fontsize=12, color='gray')
 
         # Configure plot
         ax.set_ylim(0, y_limit)
